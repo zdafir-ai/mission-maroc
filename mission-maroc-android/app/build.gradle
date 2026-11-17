@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ma.missionmaroc.junior'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ma.missionmaroc.junior'
+        minSdk 24
+        targetSdk 35
+        versionCode 2
+        versionName '0.2'
+    }
+
+    signingConfigs {
+        test {
+            storeFile file('mission-test.keystore')
+            storePassword 'missionmaroc'
+            keyAlias 'mission'
+            keyPassword 'missionmaroc'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.test
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}

@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html,body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Mission Maroc Junior</title>
+<style>
+/* Layout: a road across five Moroccan cities; each city is a street of 10 stones, each stone opens 5 arched doors. Single deliberate look, tinted per city. */
+:root{
+  --city:#1E4FA8;--deep:#14336F;--encre:#14233F;--mur:#EEF4FF;--ciel:#BCD3F5;
+  --safran:#F4B223;--blanc:#FFFFFF;--vert:#177A57;--rouge:#B3372C;--gris:#566380;
+  --titre:'Baloo Bhaijaan 2','Noto Naskh Arabic',system-ui,sans-serif;
+  --texte:Nunito,system-ui,sans-serif;
+  --arabe:'Noto Naskh Arabic','Baloo Bhaijaan 2',serif;
+  --emoji:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;
+}
+html,body{height:100%}
+body{background:var(--city);color:var(--encre);font:600 18px/1.35 var(--texte);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body.wall{background:var(--mur)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+button:focus-visible{outline:4px solid var(--safran);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+#app{max-width:560px;min-height:100%;margin:0 auto;display:flex;flex-direction:column}
+.screen{flex:1;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 18px}
+.ar{font-family:var(--arabe)}
+.emo{font-family:var(--emoji);line-height:1.1}
+
+/* écrans colorés */
+.dark{background:var(--city);color:var(--blanc)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top h1{font:800 30px/1.05 var(--titre)}
+.top .mid{flex:1;min-width:0}
+.top .mid h1{font-size:28px}
+.top .mid p{color:var(--safran);font-weight:800;font-size:16px}
+.score{display:flex;align-items:center;gap:6px;background:var(--deep);border-radius:999px;padding:6px 14px;font-weight:800;font-size:20px;flex:none}
+.score svg{width:22px;height:22px}
+.round{width:52px;height:52px;border-radius:50%;background:var(--blanc);display:grid;place-items:center;flex:none;color:var(--city)}
+.round svg{width:26px;height:26px}
+.sub{color:var(--safran);font-weight:800;font-size:17px}
+
+/* voyage */
+.road{display:flex;flex-direction:column;gap:14px;margin-top:18px;flex:1}
+.citycard{display:flex;align-items:center;gap:14px;background:var(--deep);border-radius:18px;padding:14px;text-align:start;color:var(--blanc);border:3px solid transparent}
+.citycard.now{border-color:var(--safran)}
+.citycard.lock{opacity:.55}
+.stamp{width:62px;height:62px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 26px/1 var(--titre);border:3px dashed var(--ciel);color:var(--ciel)}
+.citycard.done .stamp{border:3px solid var(--blanc);background:var(--safran);color:var(--encre)}
+.cityname{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.cityname b{font:800 24px/1.1 var(--titre)}
+.cityname span.ar{font-size:20px;line-height:1.3;color:var(--ciel);align-self:flex-start}
+.bar10{height:10px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden}
+.bar10 i{display:block;height:100%;background:var(--safran)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;color:var(--ciel);margin-top:14px}
+.link{text-decoration:underline;min-height:44px;padding:0 4px;font-weight:800;color:var(--ciel)}
+
+/* ville */
+.street{position:relative;height:900px;margin-top:8px}
+.street svg.way{position:absolute;inset:0;width:100%;height:100%}
+.stone{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--blanc)}
+.stone .disc{width:78px;height:78px;border-radius:50%;background:var(--ciel);color:var(--encre);border:5px solid var(--deep);display:grid;place-items:center;font:800 30px/1 var(--titre)}
+.stone.now .disc{background:var(--blanc);border-color:var(--safran);animation:pulse 1.6s ease-in-out infinite}
+.stone.done .disc{background:var(--safran);border-color:var(--blanc)}
+.stone.lock .disc{opacity:.55}
+.dots{display:flex;gap:4px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--deep)}
+.dots i.on{background:var(--safran)}
+@keyframes pulse{50%{transform:scale(1.07)}}
+
+/* étape : 5 portes */
+.doors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px;margin-top:26px;justify-items:center}
+.doors .door:last-child{grid-column:1/-1}
+.door{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--blanc);font-weight:800;font-size:17px}
+.arch{width:104px;height:122px;border-radius:52px 52px 8px 8px;background:var(--ciel);border:5px solid var(--deep);display:grid;place-items:center;font:800 34px/1.2 var(--titre);color:var(--encre);padding:4px}
+.arch.ar{font-family:var(--arabe);font-size:44px}
+.door.done .arch{background:var(--safran);border-color:var(--blanc)}
+.stars{display:flex;gap:2px;height:20px}
+.stars svg{width:20px;height:20px}
+
+/* activité */
+.lesson{background:var(--mur)}
+.bar{display:flex;align-items:center;gap:10px}
+.lesson .round{background:var(--blanc)}
+.steps{flex:1;display:flex;gap:6px}
+.steps i{flex:1;height:12px;border-radius:6px;background:var(--ciel)}
+.steps i.on{background:var(--city)}
+.q{font:800 26px/1.35 var(--titre);color:var(--city);text-align:center;text-wrap:balance;margin:16px 0 12px}
+.q.ar{line-height:1.6}
+.play{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0}
+.msg{min-height:40px;text-align:center;font:800 24px/1.3 var(--titre)}
+.msg.ok{color:var(--vert)}.msg.no{color:var(--rouge)}
+.tile{background:var(--blanc);border-radius:14px;border:4px solid var(--ciel);min-height:84px;display:grid;place-items:center;font:800 38px/1.15 var(--texte);padding:8px;color:var(--encre);min-width:0}
+.tile.ar,.tile .ar{font-family:var(--arabe);line-height:1.5}
+.tile.ar{font-size:40px}
+.tile svg{height:62px;width:auto;max-width:100%}
+.tile .emo{font-size:46px}
+.tile.word{display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:8px 18px;min-height:80px}
+.tile.word .wd{font-size:34px;line-height:1.4}
+.tile.word .wd.ar{font-size:36px}
+.tile.ok{border-color:var(--vert);background:#DFF3EA}
+.tile.no{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.opts{display:grid;gap:12px}
+.gridn{display:grid;gap:8px}
+.gridn .tile{min-height:66px;font-size:30px;padding:4px}
+.gridn .tile.ar{font-size:34px}
+.scene{background:var(--blanc);border-radius:14px;padding:14px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 10px;font:800 40px/1.2 var(--texte);color:var(--encre)}
+.scene .emo{font-size:38px}
+.scene .big{font-size:54px;line-height:1.4}
+.scene .word{font-size:56px;letter-spacing:2px}
+.coin{display:inline-grid;place-items:center;width:62px;height:62px;border-radius:50%;background:#E8BC4A;border:3px solid #8C6A12;font:800 17px/1 var(--texte);color:var(--encre)}
+.coin.big{width:76px;height:76px;font-size:20px}
+.group{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.group .emo{font-size:30px}
+.trace{align-self:center;width:min(100%,340px);aspect-ratio:1;background:var(--blanc);border-radius:16px;touch-action:none;display:block}
+.clear{align-self:center;min-height:48px;padding:0 22px;border-radius:999px;background:var(--blanc);color:var(--city);font-weight:800}
+.maze{align-self:center;width:min(100%,340px);aspect-ratio:1;display:grid;background:var(--blanc);border:4px solid var(--city);touch-action:none}
+.cell{display:grid;place-items:center;border:0 solid var(--city);min-width:0;min-height:0}
+.cell svg{width:76%;height:76%}
+.pad{align-self:center;display:grid;grid-template-columns:repeat(3,60px);gap:6px}
+.pad button{width:60px;height:54px;border-radius:12px;background:var(--blanc);color:var(--city);display:grid;place-items:center}
+.pad svg{width:26px;height:26px}
+
+/* récompense, fiche ville */
+.win{text-align:center;justify-content:center;gap:18px;align-items:center}
+.win h2{font:800 42px/1.15 var(--titre)}
+.bigstars{display:flex;gap:8px}.bigstars svg{width:56px;height:56px}
+.cta{background:var(--safran);color:var(--encre);font:800 22px/1.1 var(--texte);min-height:64px;padding:0 32px;border-radius:999px}
+.fact{background:var(--blanc);color:var(--encre);border-radius:18px;padding:18px;text-align:start;display:flex;flex-direction:column;gap:12px;width:100%}
+.fact h3{font:800 24px/1.2 var(--titre);color:var(--city)}
+.fact p{font-size:19px;line-height:1.5}
+.fact p.ar{font-size:21px;line-height:1.8}
+.fact .say{display:flex;gap:10px;flex-wrap:wrap}
+.fact .say button{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 16px;border-radius:999px;background:var(--mur);color:var(--city);font-weight:800}
+.fact .say svg{width:22px;height:22px}
+.panel{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+.panel button.big{min-height:60px;border-radius:14px;background:var(--blanc);color:var(--encre);font-weight:800;padding:0 16px}
+.panel p{color:var(--ciel);font-size:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--encre);color:var(--blanc);padding:12px 18px;border-radius:12px;width:max-content;max-width:calc(100% - 32px);text-align:center;font-size:16px;z-index:9}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<div id="app"></div>
+<script>
+/* ---------- icônes ---------- */
+const ICON={
+ cat:'<svg viewBox="-30 -36 60 62" role="img" aria-label="chat"><path d="M-22 22V-8L-24-32L-8-20H8L24-32L22-8V22Z" fill="#14233F"/><circle cx="-9" cy="-4" r="4" fill="#F4B223"/><circle cx="9" cy="-4" r="4" fill="#F4B223"/></svg>',
+ door:'<svg viewBox="-26 -32 52 62" role="img" aria-label="porte"><path d="M-20 26V-8a20 20 0 0 1 40 0V26Z" fill="#6C98E0" stroke="#14233F" stroke-width="2"/><circle cx="11" cy="6" r="3" fill="#14233F"/></svg>',
+ star:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z" fill="#F4B223"/></svg>',
+ starOff:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z" fill="rgba(0,0,0,.28)"/></svg>',
+ sound:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 8.5a5 5 0 0 1 0 7"/></svg>',
+ close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+ arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>'
+};
+const starsHtml=(k)=>[1,2,3].map(i=>i<=k?ICON.star:ICON.starOff).join('');
+
+/* ---------- villes ---------- */
+const CITIES=[
+ {name:'Chefchaouen',ar:'شَفْشاوَن',city:'#1E4FA8',deep:'#14336F',
+  fr:'Chefchaouen a été fondée en 1471, dans les montagnes du Rif. Ses maisons sont peintes en bleu : on dit que ce bleu rappelle le ciel.',
+  far:'تأسست شفشاون سنة 1471 في جبال الريف. بيوتها مصبوغة باللون الأزرق، ويقال إنه يذكّر بلون السماء.'},
+ {name:'Fès',ar:'فاس',city:'#0E6A55',deep:'#08483A',
+  fr:'À Fès se trouve la Quaraouiyine, fondée en 859 par une femme, Fatima al-Fihriya. C\'est l\'une des plus anciennes universités du monde.',
+  far:'في فاس توجد جامعة القرويين التي أسستها امرأة هي فاطمة الفهرية سنة 859، وهي من أقدم الجامعات في العالم.'},
+ {name:'Rabat',ar:'الرِّباط',city:'#1D5F8A',deep:'#123F5E',
+  fr:'Rabat est la capitale du Maroc, au bord de l\'océan Atlantique. La tour Hassan a été commencée vers 1195 et n\'a jamais été terminée, car le sultan est mort pendant les travaux.',
+  far:'الرباط عاصمة المغرب، وتقع على ساحل المحيط الأطلسي. بدأ بناء صومعة حسان نحو سنة 1195 ولم يكتمل، لأن السلطان توفي أثناء الأشغال.'},
+ {name:'Marrakech',ar:'مَرّاكُش',city:'#A3412A',deep:'#6E2818',
+  fr:'Marrakech a été fondée vers 1070. On l\'appelle la ville rouge à cause de la couleur de ses remparts. Sa grande place s\'appelle Jemaa el-Fna.',
+  far:'تأسست مراكش نحو سنة 1070، وتلقب بالمدينة الحمراء بسبب لون أسوارها. وأشهر ساحاتها ساحة جامع الفنا.'},
+ {name:'Essaouira',ar:'الصَّويرَة',city:'#246C82',deep:'#164756',
+  fr:'Essaouira s\'appelait autrefois Mogador. La ville a été construite au XVIIIe siècle sur ordre du sultan Sidi Mohammed ben Abdallah. Sa médina est inscrite au patrimoine mondial de l\'UNESCO depuis 2001.',
+  far:'كانت الصويرة تسمى قديما موكادور. بنيت المدينة في القرن الثامن عشر بأمر من السلطان سيدي محمد بن عبد الله، ومدينتها العتيقة مسجلة تراثا عالميا لدى اليونسكو منذ 2001.'}
+];
+
+/* ---------- contenus : arabe ---------- */
+const AR_L='ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي'.split(' ');
+const AR_N=['الْأَلِف','الْباء','التّاء','الثّاء','الْجيم','الْحاء','الْخاء','الدّال','الذّال','الرّاء','الزّاي','السّين','الشّين','الصّاد','الضّاد','الطّاء','الظّاء','الْعَيْن','الْغَيْن','الْفاء','الْقاف','الْكاف','اللّام','الْميم','النّون','الْهاء','الْواو','الْياء'];
+const AR_W=[['أَرْنَب','🐇'],['بَيْت','🏠'],['تُفّاحَة','🍎'],['ثَعْلَب','🦊'],['جَمَل','🐪'],['حِصان','🐎'],['خُبْز','🍞'],['دُبّ','🐻'],['ذِئْب','🐺'],['رَجُل','👨'],['زَرافَة','🦒'],['سَمَكَة','🐟'],['شَمْس','☀️'],['صَقْر','🦅'],['ضِفْدَع','🐸'],['طائِرَة','✈️'],['ظَرْف','✉️'],['عَيْن','👁️'],['غَيْمَة','☁️'],['فيل','🐘'],['قَمَر','🌙'],['كِتاب','📖'],['لَيْمون','🍋'],['مَوْز','🍌'],['نَجْمَة','⭐'],['هَدِيَّة','🎁'],['وَرْدَة','🌹'],['يَد','✋']];
+const AR_FAM=['بتثني','جحخ','دذ','رز','سش','صض','طظ','عغ','فق','كل','ال','مه','وه'];
+const HAR=['َ','ُ','ِ'];
+const HAR_N=['الْفَتْحَة','الضَّمَّة','الْكَسْرَة'];
+const AR_H=[
+ [['أَرْنَب','🐇'],['بَيْت','🏠'],['ثَعْلَب','🦊'],['جَمَل','🐪'],['رَجُل','👨'],['زَرافَة','🦒'],['سَمَكَة','🐟'],['شَمْس','☀️'],['صَقْر','🦅'],['طائِرَة','✈️'],['ظَرْف','✉️'],['عَيْن','👁️'],['غَيْمَة','☁️'],['قَمَر','🌙'],['لَيْمون','🍋'],['مَوْز','🍌'],['نَجْمَة','⭐'],['هَدِيَّة','🎁'],['وَرْدَة','🌹'],['يَد','✋']],
+ [['تُفّاحَة','🍎'],['خُبْز','🍞'],['دُبّ','🐻'],['بُرْتُقال','🍊'],['كُرَة','⚽'],['جُبْن','🧀'],['حُوت','🐋'],['عُصْفور','🐦'],['فُطْر','🍄'],['قُبَّعَة','🎩']],
+ [['حِصان','🐎'],['ذِئْب','🐺'],['ضِفْدَع','🐸'],['كِتاب','📖'],['بِطّيخ','🍉'],['قِطّ','🐱'],['دِيك','🐓'],['مِفْتاح','🔑'],['عِنَب','🍇']]
+];
+const syl=(L,h)=>L==='ا'?['أَ','أُ','إِ'][h]:L+HAR[h];
+const norm=c=>'أإآ'.includes(c)?'ا':c;
+
+/* ---------- contenus : français ---------- */
+const FR='abcdefghijklmnopqrstuvwxyz'.split('');
+const FR_W={a:['avion','✈️'],b:['ballon','🎈'],c:['canard','🦆'],d:['dauphin','🐬'],e:['escargot','🐌'],f:['fraise','🍓'],g:['gâteau','🎂'],h:['hibou','🦉'],i:['insecte','🐞'],j:['jupe','👗'],k:['kiwi','🥝'],l:['lune','🌙'],m:['maison','🏠'],n:['nuage','☁️'],o:['orange','🍊'],p:['pomme','🍎'],q:['quille','🎳'],r:['robot','🤖'],s:['soleil','☀️'],t:['tomate','🍅'],u:['usine','🏭'],v:['vélo','🚲'],w:['wagon','🚃'],x:['taxi','🚕'],y:['yeux','👀'],z:['zèbre','🦓']};
+const FR_SIM={a:'oe',b:'dpq',c:'eo',d:'bpq',e:'ca',f:'tl',g:'qy',h:'nk',i:'lj',j:'ig',k:'hx',l:'it',m:'nw',n:'mhu',o:'ca',p:'qbd',q:'pgd',r:'nv',s:'zc',t:'fl',u:'nv',v:'wy',w:'vm',x:'kz',y:'vg',z:'sx'};
+const FR_SYL=[
+ {c:'l',t:'la',w:'lapin',e:'🐇'},{c:'m',t:'mo',w:'moto',e:'🏍️'},{c:'p',t:'pa',w:'papillon',e:'🦋'},{c:'t',t:'to',w:'tortue',e:'🐢'},
+ {c:'r',t:'ro',w:'robot',e:'🤖'},{c:'s',t:'sa',w:'sapin',e:'🌲'},{c:'n',t:'nu',w:'nuage',e:'☁️'},{c:'d',t:'di',w:'dinosaure',e:'🦕'},
+ {c:'f',t:'fu',w:'fusée',e:'🚀'},{c:'v',t:'va',w:'valise',e:'🧳'},{c:'b',t:'ba',w:'banane',e:'🍌'},{c:'j',t:'ju',w:'judo',e:'🥋'},
+ {c:'c',t:'ca',w:'café',e:'☕',v:'aou'},{c:'g',t:'go',w:'gorille',e:'🦍',v:'aou'},{c:'ch',t:'cha',w:'chat',e:'🐱'},
+ {s:'ou',w:'loup',e:'🐺',alt:['on','oi']},{s:'on',w:'ballon',e:'🎈',alt:['ou','an']},{s:'an',w:'orange',e:'🍊',alt:['on','in']},
+ {s:'oi',w:'poisson',e:'🐟',alt:['ou','on']},{s:'in',w:'requin',e:'🦈',alt:['an','on']},{s:'eu',w:'feu',e:'🔥',alt:['ou','au']},
+ {s:'ai',w:'lait',e:'🥛',alt:['au','oi']},{s:'au',w:'chaussure',e:'👟',alt:['ou','eu']},{s:'é',w:'bébé',e:'👶',alt:['e','è']}
+];
+
+/* ---------- contenus : anglais ---------- */
+const EN_W={a:['apple','🍎'],b:['ball','⚽'],c:['cat','🐱'],d:['dog','🐶'],e:['egg','🥚'],f:['fish','🐟'],g:['goat','🐐'],h:['hat','🎩'],i:['insect','🐞'],j:['juice','🧃'],k:['kite','🪁'],l:['lion','🦁'],m:['moon','🌙'],n:['nose','👃'],o:['octopus','🐙'],p:['pig','🐷'],q:['queen','👑'],r:['rabbit','🐇'],s:['sun','☀️'],t:['tree','🌳'],u:['umbrella','☂️'],v:['van','🚐'],w:['watch','⌚'],x:['box','📦'],y:['yarn','🧶'],z:['zebra','🦓']};
+const EN_SIM={A:'HV',B:'PRD',C:'GO',D:'BOP',E:'FB',F:'EP',G:'CQ',H:'NA',I:'LT',J:'IL',K:'XR',L:'IT',M:'NW',N:'MH',O:'QCD',P:'RBF',Q:'OG',R:'PBK',S:'ZC',T:'IF',U:'VO',V:'UY',W:'MV',X:'KY',Y:'VX',Z:'SN'};
+const EN_CVC=[['cat','🐱'],['hat','🎩'],['bag','👜'],['map','🗺️'],['van','🚐'],['hen','🐔'],['bed','🛏️'],['pen','🖊️'],['net','🥅'],['web','🕸️'],['leg','🦵'],['pig','🐷'],['pin','📌'],['bin','🗑️'],['lip','👄'],['dog','🐶'],['box','📦'],['fox','🦊'],['pot','🍯'],['sun','☀️'],['bus','🚌'],['cup','☕'],['bug','🐛'],['nut','🥜']];
+
+/* ---------- hasard reproductible ---------- */
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function RNG(seed){const r=mulberry(seed);const o={f:r,int:(a,b)=>a+Math.floor(r()*(b-a+1)),pick:x=>x[Math.floor(r()*x.length)],
+ shuffle:x=>{const y=x.slice();for(let i=y.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[y[i],y[j]]=[y[j],y[i]]}return y}};return o}
+
+/* ---------- fabriques d'options ---------- */
+const T=(t,cls)=>({html:t,cls:cls||''});
+const W=(w,e,ar)=>({html:`<span class="emo">${e}</span><span class="wd ${ar?'ar':''}">${w}</span>`,cls:'word'});
+const E=e=>({html:`<span class="emo">${e}</span>`});
+function mc(rng,good,bad,extra){const all=[{...good,ok:1},...bad];const s=rng.shuffle(all);return Object.assign({t:'choose',opts:s,a:s.findIndex(o=>o.ok)},extra)}
+function numOpts(rng,ans,min){min=min==null?0:min;const c=[];for(const d of rng.shuffle([1,-1,2,-2,3,-3])){const v=ans+d;if(v>=min&&!c.includes(v))c.push(v);if(c.length===2)break}return c}
+function numQ(rng,ans,q,scene,min){return mc(rng,T(String(ans)),numOpts(rng,ans,min).map(v=>T(String(v))),{q,scene,cols:3})}
+function cells(rng,target,pool,total,nt){const p=pool.filter(x=>x!==target);const out=Array(nt).fill(target);let i=0;const sp=rng.shuffle(p);while(out.length<total){out.push(sp[i%sp.length]);i++}return rng.shuffle(out)}
+function similar(L,fam,all,rng){let s=[];fam.forEach(f=>{if(f.includes(L))s.push(...f.split('').filter(c=>c!==L))});s=[...new Set(s)];const rest=rng.shuffle(all.filter(c=>c!==L&&!s.includes(c)));return s.concat(rest.slice(0,Math.max(2,5-s.length)))}
+
+/* ---------- portes ---------- */
+const DOORS=[{id:'ar',name:'Arabe',lang:'ar'},{id:'fr',name:'Français',lang:'fr'},{id:'en',name:'English',lang:'en'},{id:'ma',name:'Maths',lang:'fr'},{id:'eg',name:'Énigmes',lang:'fr'}];
+function arInfo(n){if(n<=28)return{L:AR_L[n-1]};const k=n-29;if(k<21)return{h:Math.floor(k/7),g:AR_L.slice((k%7)*4,(k%7)*4+4),k};return{h:-1,k}}
+function mark(n,id){
+ if(id==='ar'){const i=arInfo(n);return i.L?i.L:i.h<0?'بَ بُ بِ':syl(i.g[1],i.h)}
+ if(id==='fr'){if(n<=26)return FR[n-1];const e=FR_SYL[n-27];return e.t||e.s}
+ if(id==='en'){return n<=26?FR[n-1].toUpperCase():EN_CVC[n-27][0]}
+ if(id==='ma')return['1 2 3','2+3','5−2','12','DH'][Math.floor((n-1)/10)];
+ return '?';
+}
+
+function arActs(n,rng){
+ const i=arInfo(n);
+ if(i.L){const x=n-1,L=i.L,nm=AR_N[x],w=AR_W[x];
+  const others=rng.shuffle(AR_W.filter((v,k)=>k!==x&&norm(v[0][0])!==L)).slice(0,2);
+  return[
+   {t:'trace',glyph:L,ar:1,q:'اُكْتُبْ حَرْفَ '+nm},
+   {t:'find',ar:1,q:'اِلْمَسْ كُلَّ حُروفِ '+nm,target:L,cols:4,cells:cells(rng,L,similar(L,AR_FAM,AR_L,rng),12,3+(n%2))},
+   mc(rng,W(w[0],w[1],1),others.map(o=>W(o[0],o[1],1)),{q:'أَيُّ كَلِمَةٍ تَبْدَأُ بِحَرْفِ '+nm+'؟',cols:1,check:{starts:L,ar:1}})
+  ]}
+ const rev=i.h<0;const g=rev?rng.shuffle(AR_L.slice(1)).slice(0,4):i.g;
+ const H=()=>rev?rng.int(0,2):i.h;
+ const h1=H(),h2=H(),h3=H(),h4=H();
+ const L1=g[1]==='ا'?g[2]:g[1];
+ const s0=syl(g[0],h1),tgt=syl(g[2],h3);
+ const pool=[0,1,2].filter(h=>h!==h3).map(h=>syl(g[2],h)).concat([syl(g[3],h3),syl(g[3],(h3+1)%3),syl(g[1],h3)]);
+ const list=AR_H[h4];const w=rev?rng.pick(list):list[i.k%7%list.length];
+ const sy=w[0].slice(0,2);
+ const others=rng.shuffle(AR_H.filter((_,k)=>k!==h4).flat()).slice(0,2);
+ return[
+  {t:'trace',glyph:s0,ar:1,q:'اُكْتُبْ: '+s0},
+  mc(rng,T(syl(L1,h2),'ar'),[0,1,2].filter(h=>h!==h2).map(h=>T(syl(L1,h),'ar')),{q:'رَكِّبِ الْحَرْفَ مَعَ '+HAR_N[h2],scene:`<span class="ar big">${L1}</span><span>+</span><span class="ar big">ـ${HAR[h2]}</span>`,cols:3}),
+  {t:'find',ar:1,q:'اِلْمَسْ كُلَّ الْمَقاطِعِ: '+tgt,target:tgt,cols:4,cells:cells(rng,tgt,pool,12,3+(n%2))},
+  mc(rng,W(w[0],w[1],1),others.map(o=>W(o[0],o[1],1)),{q:'أَيُّ كَلِمَةٍ تَبْدَأُ بِالْمَقْطَعِ '+sy+'؟',cols:1,check:{startsSyl:sy}})
+ ];
+}
+
+function frActs(n,rng){
+ if(n<=26){const L=FR[n-1],w=FR_W[L];
+  const isX=L==='x';
+  const others=rng.shuffle(FR.filter(c=>c!==L).map(c=>FR_W[c]).filter(v=>isX?!v[0].includes('x'):v[0][0]!==L)).slice(0,2);
+  const sim=FR_SIM[L].split('').concat(rng.shuffle(FR.filter(c=>c!==L&&!FR_SIM[L].includes(c))).slice(0,2));
+  return[
+   {t:'trace',glyph:L,q:'Trace la lettre '+L},
+   {t:'find',q:'Touche toutes les lettres '+L,target:L,cols:4,cells:cells(rng,L,sim,12,3+(n%2))},
+   mc(rng,W(w[0],w[1]),others.map(o=>W(o[0],o[1])),{q:isX?'Quel mot contient la lettre x ?':'Quel mot commence par la lettre '+L+' ?',cols:1,check:isX?{has:'x'}:{starts:L}})
+  ]}
+ const e=FR_SYL[n-27];
+ const allW=FR_SYL.map(x=>[x.w,x.e]).concat(Object.values(FR_W));
+ if(e.c){const vs=(e.v||'aeiou').split('');const v=vs[n%vs.length];
+  const asm=e.c+v;const alt=rng.shuffle(vs.filter(x=>x!==v)).slice(0,2).map(x=>e.c+x);
+  const pool=vs.filter(x=>e.c+x!==e.t).map(x=>e.c+x).concat(FR_SYL.filter(x=>x.c&&x.c!==e.c).slice(0,3).map(x=>x.c+e.t.slice(e.c.length)));
+  const others=rng.shuffle(allW.filter(x=>!x[0].startsWith(e.t)&&x[0]!==e.w)).slice(0,2);
+  return[
+   {t:'trace',glyph:e.t,q:'Trace la syllabe '+e.t},
+   mc(rng,T(asm),alt.map(a=>T(a)),{q:'Assemble les lettres',scene:`<span class="big">${e.c}</span><span>+</span><span class="big">${v}</span>`,cols:3}),
+   {t:'find',q:'Touche toutes les syllabes '+e.t,target:e.t,cols:4,cells:cells(rng,e.t,pool,12,3+(n%2))},
+   mc(rng,W(e.w,e.e),others.map(o=>W(o[0],o[1])),{q:'Quel mot commence par '+e.t+' ?',cols:1,check:{startsWord:e.t}})
+  ]}
+ const others=rng.shuffle(allW.filter(x=>!x[0].includes(e.s)&&x[0]!==e.w)).slice(0,2);
+ const parts=e.s==='é'?null:e.s.split('');
+ return[
+  {t:'trace',glyph:e.s,q:'Trace le son « '+e.s+' »'},
+  mc(rng,T(e.s),e.alt.map(a=>T(a)),parts?{q:'Assemble les lettres',scene:`<span class="big">${parts[0]}</span><span>+</span><span class="big">${parts[1]}</span>`,cols:3}:{q:'Touche le é',cols:3}),
+  {t:'find',q:'Touche tous les « '+e.s+' »',target:e.s,cols:4,cells:cells(rng,e.s,e.alt.concat(e.alt),12,3+(n%2))},
+  mc(rng,W(e.w,e.e),others.map(o=>W(o[0],o[1])),{q:'Dans quel mot vois-tu « '+e.s+' » ?',cols:1,check:{has:e.s}})
+ ];
+}
+
+function enActs(n,rng){
+ if(n<=26){const l=FR[n-1],L=l.toUpperCase(),w=EN_W[l];const isX=l==='x';
+  const others=rng.shuffle(FR.filter(c=>c!==l).map(c=>EN_W[c]).filter(v=>isX?!v[0].includes('x'):v[0][0]!==l)).slice(0,2);
+  const sim=EN_SIM[L].split('').concat(rng.shuffle(FR.map(c=>c.toUpperCase()).filter(c=>c!==L&&!EN_SIM[L].includes(c))).slice(0,2));
+  return[
+   {t:'trace',glyph:L,q:'Trace the letter '+L},
+   {t:'find',q:'Touch every letter '+L,target:L,cols:4,cells:cells(rng,L,sim,12,3+(n%2))},
+   mc(rng,W(w[0],w[1]),others.map(o=>W(o[0],o[1])),{q:isX?'Which word has the letter x?':'Which word starts with '+l+'?',cols:1,check:isX?{has:'x'}:{starts:l}})
+  ]}
+ const x=n-27,[w,e]=EN_CVC[x];const V='aeiou';const bad=['fux','fuk','fik','fak','cun','cnt','dik','tit','pis','pus','sux','nig','fag'];
+ const swaps=rng.shuffle(V.split('').filter(v=>v!==w[1])).map(v=>w[0]+v+w[2]).filter(s=>!bad.includes(s)&&!EN_CVC.some(c=>c[0]===s)).slice(0,2);
+ const pics=rng.shuffle(EN_CVC.filter(c=>c[0]!==w)).slice(0,2);
+ return[
+  {t:'trace',glyph:w,q:'Trace the word '+w},
+  mc(rng,T(w),swaps.map(s=>T(s)),{q:'Put the sounds together',scene:w.split('').map(c=>`<span class="big">${c}</span>`).join('<span>+</span>'),cols:3}),
+  mc(rng,E(e),pics.map(p=>E(p[1])),{q:'Read the word. Touch the picture.',scene:`<span class="word">${w}</span>`,cols:3})
+ ];
+}
+
+const POOL=['🍎','⭐','🐟','🌸','🚗','🎈','🐞','🍋'];
+const rep=(e,k)=>`<span class="emo">${e.repeat(k)}</span>`;
+function maActs(n,rng){
+ const c=Math.floor((n-1)/10);const em=()=>rng.pick(POOL);
+ if(c===0){
+  const k=rng.int(2,Math.min(10,3+n)),e1=em();
+  let a=rng.int(1,9),b=rng.int(1,9);while(a===b)b=rng.int(1,9);const e2=em();
+  const s=rng.int(1,5),miss=rng.int(1,3);const seq=[0,1,2,3,4].map(i=>s+i);
+  return[
+   numQ(rng,k,'Compte. Combien y en a-t-il ?',rep(e1,k),1),
+   Object.assign(mc(rng,{html:`<span class="group">${rep(e2,Math.max(a,b))}</span>`},[{html:`<span class="group">${rep(e2,Math.min(a,b))}</span>`}]),{q:'Touche le groupe où il y en a le plus',cols:2}),
+   numQ(rng,seq[miss],'Quel nombre manque ?',seq.map((v,i)=>i===miss?'?':v).join(' &nbsp; '),1)
+  ]}
+ if(c===1){
+  const a=rng.int(1,5),b=rng.int(1,5),e=em();const x=rng.int(1,9),y=rng.int(1,10-x);
+  const s=rng.int(8,14),miss=rng.int(1,3);const seq=[0,1,2,3,4].map(i=>s+i);
+  return[
+   numQ(rng,a+b,'Combien en tout ?',`${rep(e,a)}<span>+</span>${rep(e,b)}`,1),
+   numQ(rng,x+y,`${x} + ${y} = ?`,null,0),
+   numQ(rng,seq[miss],'Quel nombre manque ?',seq.map((v,i)=>i===miss?'?':v).join(' &nbsp; '),1)
+  ]}
+ if(c===2){
+  const a=rng.int(4,8),b=rng.int(1,a-1),e=em();const x=rng.int(3,10),y=rng.int(1,x);
+  const ns=[];while(ns.length<3){const v=rng.int(5,20);if(!ns.includes(v))ns.push(v)}const mx=Math.max(...ns);
+  return[
+   numQ(rng,a-b,`J'ai ${a} ${e==='🍎'?'pommes':'dessins'}. J'en enlève ${b}. Combien en reste-t-il ?`,`${rep(e,a)}<span>−</span><span class="emo">${b}</span>`,0),
+   numQ(rng,x-y,`${x} − ${y} = ?`,null,0),
+   mc(rng,T(String(mx)),ns.filter(v=>v!==mx).map(v=>T(String(v))),{q:'Touche le plus grand nombre',cols:3})
+  ]}
+ if(c===3){
+  const a=rng.int(6,12),b=rng.int(2,20-a);const x=rng.int(11,20),y=rng.int(1,9);
+  const by=n%2?2:10,st=by===2?rng.int(1,4)*2:10;const seq=[0,1,2,3].map(i=>st+i*by);
+  return[
+   numQ(rng,a+b,`${a} + ${b} = ?`,null,0),
+   numQ(rng,x-y,`${x} − ${y} = ?`,null,0),
+   numQ(rng,seq[3],`On compte de ${by} en ${by}. Quel nombre vient après ?`,seq.slice(0,3).join(' &nbsp; ')+' &nbsp; ?',0)
+  ]}
+ const coins=[];let tot=0;const cn=rng.int(2,4);for(let i=0;i<cn;i++){const v=rng.pick(tot>10?[1,2]:[1,2,5,10]);coins.push(v);tot+=v}
+ const d=rng.int(2,10);
+ const names=['Salma','Yassine'];const who=rng.pick(names),other=who==='Salma'?'Yassine':'Salma';const thing=rng.pick(['billes','dattes','cartes']);
+ const p=rng.int(6,15),q=rng.int(2,Math.min(9,p-1));const add=n%2===0;
+ return[
+  numQ(rng,tot,'Combien de dirhams en tout ?',coins.map(v=>`<span class="coin">${v} DH</span>`).join(''),1),
+  (()=>{const e=rng.pick(POOL);return numQ(rng,d*2,`Le double de ${d}, c'est combien ?`,`${rep(e,d)}<span>+</span>${rep(e,d)}`,1)})(),
+  numQ(rng,add?p+q:p-q,add?`${who} a ${p} ${thing}. ${other} lui en donne ${q}. Combien de ${thing} a ${who} maintenant ?`:`${who} a ${p} ${thing}. ${who==='Salma'?'Elle':'Il'} en donne ${q} à ${other}. Combien lui en reste-t-il ?`,null,0)
+ ];
+}
+
+const CATS={animaux:['🐱','🐶','🐰','🐮','🐔','🐘','🦁','🐸'],fruits:['🍎','🍌','🍇','🍊','🍓','🍉','🍐','🍋'],transports:['🚗','🚌','🚲','✈️','🚂','🚀','🚕','⛵'],vetements:['👕','👖','👗','👟','🧦','🧢','🧤','🧣']};
+const PAT=['🍎','🍌','🐟','⭐','🌙','🎈','🌸','🚗'];
+function egActs(n,rng){
+ const c=Math.floor((n-1)/10);
+ const u=rng.shuffle(PAT).slice(0,4);
+ const unit=[[0,1],[0,1,2],[0,0,1],[0,1,1],n%2?[0,1,2,3]:[0,0,1,1]][c].map(i=>u[i]);
+ const len=unit.length*2+Math.min(unit.length-1,1+(n%2));const seq=[];for(let i=0;i<len;i++)seq.push(unit[i%unit.length]);
+ const next=unit[len%unit.length];const wrong=rng.shuffle(u.filter(x=>x!==next)).slice(0,2);
+ const keys=rng.shuffle(Object.keys(CATS));const main=CATS[keys[0]],odd=rng.pick(CATS[keys[1]]);
+ const three=rng.shuffle(main).slice(0,3);
+ return[
+  mc(rng,E(next),wrong.map(E),{q:'Qu\'est-ce qui vient après ?',scene:seq.map(x=>`<span class="emo">${x}</span>`).join('')+'<span>?</span>',cols:3}),
+  mc(rng,E(odd),three.map(E),{q:'Touche l\'intrus',cols:2}),
+  {t:'maze',q:'Aide le chat à rejoindre la porte',n:4+Math.min(c,3)+(c===4&&n>45?1:0),seed:n*7919}
+ ];
+}
+
+function stageActs(n,id){const rng=RNG(n*1009+DOORS.findIndex(d=>d.id===id)*131+17);
+ return{ar:arActs,fr:frActs,en:enActs,ma:maActs,eg:egActs}[id](n,rng)}
+
+/* ---------- état ---------- */
+const app=document.getElementById('app');
+const KEY='mission-maroc-v2';
+let S=load();
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.done)return v}catch(e){}return{done:{},all:false}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const doorStars=(n,id)=>S.done[n+'-'+id]||0;
+const stageDone=n=>DOORS.every(d=>doorStars(n,d.id)>0);
+const stageOpen=n=>S.all||n===1||stageDone(n-1);
+const cityOf=n=>Math.floor((n-1)/10);
+const cityOpen=ci=>stageOpen(ci*10+1);
+const cityCount=ci=>{let k=0;for(let n=ci*10+1;n<=ci*10+10;n++)if(stageDone(n))k++;return k};
+const total=()=>Object.values(S.done).reduce((a,b)=>a+b,0);
+function nextStage(){for(let n=1;n<=50;n++)if(!stageDone(n))return n;return 51}
+function tint(ci){const c=CITIES[Math.min(ci,4)];document.documentElement.style.setProperty('--city',c.city);document.documentElement.style.setProperty('--deep',c.deep)}
+let cur={s:'journey'};
+
+/* ---------- son ---------- */
+const WORDS={fr:['Bravo !','Essaie encore'],ar:['أَحْسَنْتَ!','حاوِلْ مَرَّةً أُخْرى'],en:['Well done!','Try again']};
+let actx=null;
+function beep(ok){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+ (ok?[523,784]:[220]).forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime+i*.11;g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.start(t);o.stop(t+.22)})}catch(e){}}
+function toast(m){document.querySelectorAll('.toast').forEach(e=>e.remove());const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.append(d);setTimeout(()=>d.remove(),2600)}
+function speak(text,lang){
+ const names={ar:'arabe',fr:'française',en:'anglaise'};
+ text=text.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+ if(window.AndroidVoice){const r=AndroidVoice.speak(text,lang);if(r==='novoice')toast('Voix '+names[lang]+' absente de ce téléphone.');else if(r==='notready')toast('Le son se prépare. Réessaie.');return}
+ try{const s=window.speechSynthesis;if(!s){toast('Le son n\'est pas disponible sur cet appareil.');return}
+  const voices=s.getVoices(),v=voices.find(x=>x.lang.toLowerCase().startsWith(lang));
+  if(voices.length&&!v){toast('Voix '+names[lang]+' absente de cet appareil.');return}
+  s.cancel();const u=new SpeechSynthesisUtterance(text);u.lang={ar:'ar-MA',fr:'fr-FR',en:'en-GB'}[lang];if(v)u.voice=v;u.rate=.9;s.speak(u)
+ }catch(e){toast('Le son n\'est pas disponible sur cet appareil.')}}
+function show(html,wall){document.body.classList.toggle('wall',!!wall);app.innerHTML=html;window.scrollTo(0,0)}
+
+/* ---------- écran : voyage ---------- */
+function journey(){
+ cur={s:'journey'};const nx=nextStage();tint(Math.min(cityOf(Math.min(nx,50)),4));
+ const cards=CITIES.map((c,ci)=>{const k=cityCount(ci),open=cityOpen(ci),done=k===10,now=open&&!done&&cityOf(nx)===ci;
+  return `<button class="citycard ${done?'done':''} ${now?'now':''} ${open?'':'lock'}" data-c="${ci}" aria-label="${c.name}, ${k} étapes sur 10${open?'':', fermé'}">
+   <span class="stamp">${done?'✓':ci+1}</span>
+   <span class="cityname"><b>${c.name}</b><span class="ar" dir="rtl">${c.ar}</span><span class="bar10"><i style="width:${k*10}%"></i></span></span>
+   <span style="font-weight:800">${k}/10</span></button>`}).join('');
+ show(`<section class="screen dark">
+  <div class="top"><h1>Mission Maroc</h1><div class="score" aria-label="${total()} étoiles">${ICON.star}<span>${total()}</span></div></div>
+  <p class="sub">Le voyage · 50 étapes · 5-7 ans</p>
+  <div class="road">${cards}</div>
+  <div class="foot"><span>Prototype à tester</span><button class="link" id="parents">Espace parents</button></div></section>`);
+ app.querySelectorAll('.citycard').forEach(b=>b.onclick=()=>{const ci=+b.dataset.c;if(cityOpen(ci))city(ci);else{beep(false);toast('Termine d\'abord '+CITIES[ci-1].name+'.')}});
+ document.getElementById('parents').onclick=parentGate;
+}
+
+/* ---------- écran : ville ---------- */
+const SPOS=[[26,5],[72,14],[28,24],[72,34],[28,44],[72,54],[28,64],[72,74],[28,84],[70,94]];
+function city(ci){
+ cur={s:'city',ci};tint(ci);const c=CITIES[ci];const nx=nextStage();
+ const stones=SPOS.map((p,i)=>{const n=ci*10+i+1,open=stageOpen(n),done=stageDone(n),now=open&&!done&&(n===nx||S.all);
+  const dots=DOORS.map(d=>`<i class="${doorStars(n,d.id)?'on':''}"></i>`).join('');
+  return `<button class="stone ${done?'done':''} ${now?'now':''} ${open?'':'lock'}" data-n="${n}" style="left:${p[0]}%;top:${p[1]}%" aria-label="Étape ${n}${open?'':', fermée'}"><span class="disc">${n}</span><span class="dots">${dots}</span></button>`}).join('');
+ show(`<section class="screen dark">
+  <div class="top"><button class="round" id="out" aria-label="Retour au voyage">${ICON.back}</button><div class="mid"><h1>${c.name}</h1><p>Ville ${ci+1} sur 5 · ${cityCount(ci)}/10 étapes</p></div><div class="score">${ICON.star}<span>${total()}</span></div></div>
+  <div class="street"><svg class="way" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${SPOS.map(p=>p.join(' ')).join(',')}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-dasharray="1 8" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>${stones}</div>
+ </section>`);
+ document.getElementById('out').onclick=journey;
+ app.querySelectorAll('.stone').forEach(b=>b.onclick=()=>{const n=+b.dataset.n;if(stageOpen(n))stage(n);else{beep(false);toast('Termine d\'abord l\'étape '+(n-1)+'.')}});
+ if(cur.scrollTo){}
+}
+
+/* ---------- écran : étape ---------- */
+function stage(n){
+ cur={s:'stage',n};const ci=cityOf(n);tint(ci);
+ const doors=DOORS.map(d=>{const st=doorStars(n,d.id);const m=mark(n,d.id);
+  return `<button class="door ${st?'done':''}" data-d="${d.id}" aria-label="${d.name}${st?', terminé':''}"><span class="arch ${d.id==='ar'?'ar':''}" ${d.id==='ar'?'dir="rtl"':''}>${m}</span><span>${d.name}</span><span class="stars">${st?starsHtml(st):''}</span></button>`}).join('');
+ show(`<section class="screen dark">
+  <div class="top"><button class="round" id="out" aria-label="Retour à ${CITIES[ci].name}">${ICON.back}</button><div class="mid"><h1>Étape ${n}</h1><p>${CITIES[ci].name} · choisis une porte</p></div></div>
+  <div class="doors">${doors}</div></section>`);
+ document.getElementById('out').onclick=()=>city(ci);
+ app.querySelectorAll('.door').forEach(b=>b.onclick=()=>play(n,b.dataset.d));
+}
+
+/* ---------- jeu ---------- */
+let cleanup=()=>{};
+function play(n,id){
+ const door=DOORS.find(d=>d.id===id),acts=stageActs(n,id);let idx=0,errs=0,busy=false;
+ cur={s:'play',n};const words=WORDS[door.lang];const rtl=door.lang==='ar';
+ function draw(){
+  const a=acts[idx];window.__cur=a;
+  const dots=acts.map((_,i)=>`<i class="${i<=idx?'on':''}"></i>`).join('');
+  show(`<section class="screen lesson" ${rtl?'dir="rtl"':''}>
+   <div class="bar"><button class="round" id="out" aria-label="Retour aux portes">${ICON.close}</button><div class="steps">${dots}</div><button class="round" id="say" aria-label="Écouter la consigne">${ICON.sound}</button></div>
+   <h2 class="q ${rtl?'ar':''}">${a.q}</h2><div class="play" id="play"></div><p class="msg" id="msg" role="status"></p></section>`,true);
+  document.getElementById('out').onclick=()=>stage(n);
+  document.getElementById('say').onclick=()=>speak(a.q,door.lang);
+  ({trace,find,choose,maze})[a.t](document.getElementById('play'),a,{ok,no},rtl);
+ }
+ function msg(t,c){const m=document.getElementById('msg');if(m){m.textContent=t;m.className='msg '+c}}
+ function ok(){if(busy)return;busy=true;beep(true);msg(words[0],'ok');setTimeout(()=>{busy=false;if(cur.s!=='play')return;idx++;idx<acts.length?draw():end()},700)}
+ function no(el){errs++;beep(false);msg(words[1],'no');if(el){el.classList.remove('no');void el.offsetWidth;el.classList.add('no')}}
+ function end(){
+  const was=stageDone(n);const st=errs===0?3:errs<=2?2:1;const k=n+'-'+id;S.done[k]=Math.max(S.done[k]||0,st);save();
+  const finished=!was&&stageDone(n);
+  cur={s:'win',n};
+  show(`<section class="screen dark win"><h2>${finished?'Étape '+n+' terminée !':'Bravo !'}</h2>
+   <div class="bigstars" aria-label="${st} étoiles sur 3">${starsHtml(st)}</div>
+   <p style="font-size:20px;font-weight:800">${finished?'Les 5 portes sont ouvertes.':'Porte '+door.name+' réussie.'}</p>
+   <button class="cta" id="go">${finished?(n%10===0?'Découvrir la ville':'Étape suivante'):'Retour aux portes'}</button></section>`);
+  document.getElementById('go').onclick=()=>{if(!finished)stage(n);else if(n%10===0)fact(cityOf(n));else stage(n+1)};
+ }
+ draw();
+}
+
+function choose(host,a,api,rtl){
+ const cols=a.cols||3;
+ host.innerHTML=`${a.scene?`<div class="scene" dir="${rtl?'rtl':'ltr'}">${a.scene}</div>`:''}<div class="opts" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${a.opts.map((o,i)=>`<button class="tile ${o.cls||''}" data-i="${i}">${o.html}</button>`).join('')}</div>`;
+ let fin=false;
+ host.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{if(fin)return;if(+b.dataset.i===a.a){fin=true;b.classList.add('ok');api.ok()}else api.no(b)});
+}
+function find(host,a,api){
+ const need=a.cells.filter(c=>c===a.target).length;let got=0;
+ host.innerHTML=`<div class="gridn" style="grid-template-columns:repeat(${a.cols},minmax(0,1fr))">${a.cells.map(c=>`<button class="tile ${a.ar?'ar':''}" data-c="${c}">${c}</button>`).join('')}</div>`;
+ host.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{if(b.classList.contains('ok'))return;
+  if(b.dataset.c===a.target){b.classList.add('ok');if(++got===need)api.ok();else beep(true)}else api.no(b)});
+}
+function trace(host,a,api,rtl){
+ host.innerHTML=`<canvas class="trace" width="340" height="340" aria-label="Zone de traçage"></canvas><button class="clear" id="clr">${rtl?'اِمْسَحْ':a.q.startsWith('Trace the')?'Clear':'Effacer'}</button>`;
+ const c=host.querySelector('canvas'),g=c.getContext('2d',{willReadFrequently:true}),size=340;
+ const fam=a.ar?"'Noto Naskh Arabic',serif":"Nunito,sans-serif",wt=a.ar?700:800;
+ let font='',gx=170,gy=170;
+ function fit(){let px=a.ar?250:290;for(;px>60;px-=10){g.font=`${wt} ${px}px ${fam}`;const m=g.measureText(a.glyph);const h=(m.actualBoundingBoxAscent||px*.7)+(m.actualBoundingBoxDescent||0);if(m.width<=290&&h<=290)break}
+  font=`${wt} ${px}px ${fam}`;g.font=font;g.textAlign='center';g.textBaseline='alphabetic';const m=g.measureText(a.glyph);
+  const asc=m.actualBoundingBoxAscent||px*.7,desc=m.actualBoundingBoxDescent||0;gy=170+(asc-desc)/2;
+  const l=m.actualBoundingBoxLeft,r=m.actualBoundingBoxRight;gx=(l!=null&&r!=null)?170+(l-r)/2:170}
+ let strokes=[],mask=null,fin=false,total=0;
+ function guide(){g.clearRect(0,0,size,size);g.fillStyle='#BCD3F5';g.font=font;g.textAlign='center';g.textBaseline='alphabetic';g.fillText(a.glyph,gx,gy)}
+ function ink(x){x.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--city').trim()||'#1E4FA8';x.lineWidth=26;x.lineCap='round';x.lineJoin='round';strokes.forEach(s=>{x.beginPath();x.moveTo(s[0][0],s[0][1]);s.forEach(p=>x.lineTo(p[0],p[1]));if(s.length===1)x.lineTo(s[0][0]+.1,s[0][1]);x.stroke()})}
+ function paint(){guide();ink(g)}
+ function build(){fit();guide();const d=g.getImageData(0,0,size,size).data;mask=new Uint8Array(size*size);total=0;for(let i=0;i<mask.length;i++){if(d[i*4+3]>120){mask[i]=1;total++}}paint()}
+ function near(x,y){for(let dy=-14;dy<=14;dy+=7)for(let dx=-14;dx<=14;dx+=7){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<size&&Y<size&&mask[Y*size+X])return true}return false}
+ function grade(){if(fin||!total)return;const o=document.createElement('canvas');o.width=o.height=size;const x=o.getContext('2d');ink(x);const d=x.getImageData(0,0,size,size).data;
+  let hit=0,inked=0,off=0;for(let y=0;y<size;y++)for(let i=0;i<size;i++){const k=y*size+i;if(d[k*4+3]>120){inked++;if(!near(i,y))off++;if(mask[k])hit++}}
+  if(inked&&hit/total>=.68&&off/inked<=.3){fin=true;api.ok()}}
+ const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*size/r.width,(e.clientY-r.top)*size/r.height]};
+ let down=false;
+ c.onpointerdown=e=>{if(fin)return;down=true;try{c.setPointerCapture(e.pointerId)}catch(_){}strokes.push([pos(e)]);paint()};
+ c.onpointermove=e=>{if(!down)return;strokes[strokes.length-1].push(pos(e));paint()};
+ c.onpointerup=c.onpointercancel=()=>{if(!down)return;down=false;grade()};
+ host.querySelector('#clr').onclick=()=>{strokes=[];paint()};
+ fit();guide();
+ const ready=document.fonts&&document.fonts.load?document.fonts.load(`${wt} 100px ${fam}`,a.glyph).catch(()=>{}):Promise.resolve();
+ Promise.resolve(ready).then(build);
+}
+function buildMaze(n,seed){
+ const r=mulberry(seed);const open=Array.from({length:n*n},()=>({N:0,E:0,S:0,W:0}));
+ const seen=new Set([0]),stack=[0],D={N:[0,-1,'S'],E:[1,0,'W'],S:[0,1,'N'],W:[-1,0,'E']};
+ while(stack.length){const c=stack[stack.length-1],x=c%n,y=(c/n)|0;
+  const opts=Object.keys(D).filter(d=>{const X=x+D[d][0],Y=y+D[d][1];return X>=0&&Y>=0&&X<n&&Y<n&&!seen.has(Y*n+X)});
+  if(!opts.length){stack.pop();continue}
+  const d=opts[Math.floor(r()*opts.length)],X=x+D[d][0],Y=y+D[d][1],k=Y*n+X;open[c][d]=1;open[k][D[d][2]]=1;seen.add(k);stack.push(k)}
+ return open}
+function maze(host,a,api){
+ const n=a.n,open=buildMaze(n,a.seed);let at=0,fin=false;const b=n>6?3:4;
+ host.innerHTML=`<div class="maze" id="mz" style="grid-template-columns:repeat(${n},1fr)" dir="ltr">${open.map((c,i)=>`<div class="cell" style="border-top-width:${c.N?0:b}px;border-right-width:${c.E?0:b}px;border-bottom-width:${c.S?0:b}px;border-left-width:${c.W?0:b}px"></div>`).join('')}</div>
+ <div class="pad" dir="ltr"><span></span><button data-d="N" aria-label="Haut">${ICON.arrow}</button><span></span><button data-d="W" aria-label="Gauche" style="transform:rotate(-90deg)">${ICON.arrow}</button><button data-d="S" aria-label="Bas" style="transform:rotate(180deg)">${ICON.arrow}</button><button data-d="E" aria-label="Droite" style="transform:rotate(90deg)">${ICON.arrow}</button></div>`;
+ const cells=[...host.querySelectorAll('.cell')];
+ const paint=()=>cells.forEach((c,i)=>c.innerHTML=i===at?ICON.cat:i===n*n-1?ICON.door:'');
+ const moveTo=t=>{at=t;paint();if(at===n*n-1&&!fin){fin=true;api.ok()}};
+ const step=d=>{if(fin)return;const m={N:-n,E:1,S:n,W:-1};if(open[at][d])moveTo(at+m[d]);else beep(false)};
+ paint();
+ host.querySelectorAll('.pad button').forEach(p=>p.onclick=()=>step(p.dataset.d));
+ const mz=host.querySelector('#mz');let down=false;
+ const drag=e=>{if(fin)return;const r=mz.getBoundingClientRect(),X=Math.floor((e.clientX-r.left)/r.width*n),Y=Math.floor((e.clientY-r.top)/r.height*n);if(X<0||Y<0||X>=n||Y>=n)return;
+  const ax=at%n,ay=(at/n)|0,t=Y*n+X;const d=X===ax+1&&Y===ay?'E':X===ax-1&&Y===ay?'W':Y===ay+1&&X===ax?'S':Y===ay-1&&X===ax?'N':null;if(d&&open[at][d])moveTo(t)};
+ mz.onpointerdown=e=>{down=true;try{mz.setPointerCapture(e.pointerId)}catch(_){}drag(e)};
+ mz.onpointermove=e=>{if(down)drag(e)};
+ mz.onpointerup=mz.onpointercancel=()=>down=false;
+}
+
+/* ---------- fiche ville ---------- */
+function fact(ci){
+ cur={s:'fact',ci};tint(ci);const c=CITIES[ci];const last=ci===4;
+ show(`<section class="screen dark win">
+  <div class="bigstars">${ICON.star+ICON.star+ICON.star}</div>
+  <h2>${last?'Voyage terminé !':'Tu as fini '+c.name+' !'}</h2>
+  <div class="fact"><h3>Le savais-tu ?</h3><p>${c.fr}</p><p class="ar" dir="rtl">${c.far}</p>
+   <div class="say"><button id="sfr">${ICON.sound}Écouter</button><button id="sar">${ICON.sound}<span class="ar">اِسْتَمِعْ</span></button></div></div>
+  <button class="cta" id="go">${last?'Retour au voyage':'En route pour '+CITIES[ci+1].name}</button></section>`);
+ document.getElementById('sfr').onclick=()=>speak(c.fr,'fr');
+ document.getElementById('sar').onclick=()=>speak(c.far,'ar');
+ document.getElementById('go').onclick=()=>last?journey():city(ci+1);
+}
+
+/* ---------- espace parents ---------- */
+function parentGate(){
+ cur={s:'parent'};const a=6+Math.floor(Math.random()*4),b=6+Math.floor(Math.random()*3),r=a*b;
+ const opts=[r,r+a,r-b].sort(()=>Math.random()-.5);
+ show(`<section class="screen dark"><div class="top"><button class="round" id="out" aria-label="Retour au voyage">${ICON.back}</button><div class="mid"><h1>Espace parents</h1><p>Réservé aux adultes</p></div></div>
+  <p style="margin-top:24px;font-size:22px;font-weight:800;text-align:center">Combien font ${a} × ${b} ?</p>
+  <div class="opts" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px">${opts.map(v=>`<button class="tile" data-v="${v}">${v}</button>`).join('')}</div></section>`);
+ document.getElementById('out').onclick=journey;
+ app.querySelectorAll('[data-v]').forEach(t=>t.onclick=()=>{if(+t.dataset.v===r)parents();else journey()});
+}
+function parents(){
+ cur={s:'parent'};
+ show(`<section class="screen dark"><div class="top"><button class="round" id="out" aria-label="Retour au voyage">${ICON.back}</button><div class="mid"><h1>Espace parents</h1><p>${total()} étoiles · étape ${Math.min(nextStage(),50)} sur 50</p></div></div>
+  <div class="panel">
+   <button class="big" id="all">${S.all?'Reverrouiller les étapes':'Ouvrir toutes les étapes'}</button>
+   <p>Pour essayer n'importe quelle étape sans suivre l'ordre.</p>
+   <button class="big" id="reset">Tout effacer</button>
+   <p>Efface les étoiles et la progression de cet appareil.</p>
+  </div></section>`);
+ document.getElementById('out').onclick=journey;
+ document.getElementById('all').onclick=()=>{S.all=!S.all;save();parents()};
+ const r=document.getElementById('reset');r.onclick=()=>{if(r.dataset.c){S={done:{},all:false};save();journey()}else{r.dataset.c=1;r.textContent='Confirmer : tout effacer ?'}};
+}
+
+window.appBack=()=>{const s=cur.s;
+ if(s==='journey')return false;
+ if(s==='play'||s==='win')stage(cur.n);else if(s==='stage')city(cityOf(cur.n));else if(s==='fact')city(cur.ci);else journey();return true};
+window.__stageActs=stageActs;
+journey();
+</script>
+
+</body>
+</html>
